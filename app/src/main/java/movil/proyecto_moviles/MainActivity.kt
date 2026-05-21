@@ -10,6 +10,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import movil.proyecto_moviles.screens.ContenidoPrincipalScreen
 import movil.proyecto_moviles.screens.PantallaBienvenida
 import movil.proyecto_moviles.screens.RegistroScreen
 import movil.proyecto_moviles.screens.SesionPantalla
@@ -61,8 +62,14 @@ fun AppMoviRed() {
                     pantallaActual = "inicio"
                 },
                 onIniciarSesionClick = {
+                    pantallaActual = "contenido"
                 },
                 onOlvidoPasswordClick = {
+                }
+            )
+            "contenido" -> ContenidoPrincipalScreen(
+                onCerrarSesion = {
+                    pantallaActual = "inicio"
                 }
             )
         }
