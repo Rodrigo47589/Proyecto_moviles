@@ -26,10 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import movil.proyecto_moviles.screens.mapa.ParkingUi
+import movil.proyecto_moviles.screens.mapa.BikeRouteUi
 
 @Composable
 fun MapAreaPlaceholder(
     selectedParking: ParkingUi?,
+    bikeRoutes: List<BikeRouteUi>,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -63,39 +65,54 @@ fun MapAreaPlaceholder(
                 y += spacing
             }
 
-            val route1 = Path().apply {
-                moveTo(size.width * 0.08f, size.height * 0.62f)
-                cubicTo(
-                    size.width * 0.20f, size.height * 0.35f,
-                    size.width * 0.48f, size.height * 0.55f,
-                    size.width * 0.78f, size.height * 0.58f
-                )
-            }
+            val allPoints = bikeRoutes.flatMap { it.points }
 
-            val route2 = Path().apply {
-                moveTo(size.width * 0.62f, size.height * 0.15f)
-                cubicTo(
-                    size.width * 0.75f, size.height * 0.30f,
-                    size.width * 0.76f, size.height * 0.55f,
-                    size.width * 0.70f, size.height * 0.95f
-                )
-            }
+            if (allPoints.isNotEmpty()) {
+                val minLat = allPoints.minOf { it.latitude }
+                val maxLat = allPoints.maxOf { it.latitude }
+                val minLon = allPoints.minOf { it.longitude }
+                val maxLon = allPoints.maxOf { it.longitude }
 
-            val route3 = Path().apply {
-                moveTo(size.width * 0.30f, size.height * 0.95f)
-                cubicTo(
-                    size.width * 0.42f, size.height * 0.82f,
-                    size.width * 0.60f, size.height * 0.75f,
-                    size.width * 0.86f, size.height * 0.86f
-                )
-            }
+                val padding = 40f
+                val drawableWidth = size.width - (padding * 2)
+                val drawableHeight = size.height - (padding * 2)
 
-            listOf(route1, route2, route3).forEach {
-                drawPath(
-                    path = it,
-                    color = Color(0xFF156FE6),
-                    style = Stroke(width = 9f, cap = StrokeCap.Round)
-                )
+                fun projectX(lon: Double): Float {
+                    val fraction = if (maxLon == minLon) 0.5
+                    else (lon - minLon) / (maxLon - minLon)
+                    return (padding + fraction * drawableWidth).toFloat()
+                }
+
+                fun projectY(lat: Double): Float {
+                    val fraction = if (maxLat == minLat) 0.5
+                    else (maxLat - lat) / (maxLat - minLat)
+                    return (padding + fraction * drawableHeight).toFloat()
+                }
+
+                bikeRoutes.forEach { route ->
+                    if (route.points.size >= 2) {
+                        val path = Path().apply {
+                            val first = route.points.first()
+                            moveTo(
+                                projectX(first.longitude),
+                                projectY(first.latitude)
+                            )
+
+                            route.points.drop(1).forEach { point ->
+                                lineTo(
+                                    projectX(point.longitude),
+                                    projectY(point.latitude)
+                                )
+                            }
+                        }
+
+                        drawPath(
+                            path = path,
+                            color = Color(0xFF156FE6),
+                            style = Stroke(width = 6f, cap = StrokeCap.Round)
+                        )
+                    }
+                }
             }
         }
 

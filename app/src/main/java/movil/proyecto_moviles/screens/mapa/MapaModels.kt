@@ -1,5 +1,10 @@
 package movil.proyecto_moviles.screens.mapa
 
+data class UserLocationUi(
+    val latitude: Double,
+    val longitude: Double
+)
+
 data class ParkingUi(
     val id: String,
     val name: String,
@@ -22,3 +27,14 @@ data class ParkingUi(
             else -> "Baja"
         }
 }
+
+data class BikeRoutePointUi(
+    val latitude: Double,
+    val longitude: Double
+)
+
+data class BikeRouteUi(
+    val id: String,
+    val name: String?,
+    val points: List<BikeRoutePointUi>
+)
