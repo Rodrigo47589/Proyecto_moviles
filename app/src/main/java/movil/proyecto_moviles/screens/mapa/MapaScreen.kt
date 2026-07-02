@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.gms.location.LocationServices
+import movil.proyecto_moviles.data.mapa.OpenStreetMapView
 import movil.proyecto_moviles.screens.mapa.components.MapAreaPlaceholder
 import movil.proyecto_moviles.screens.mapa.components.NearbyParkingSheet
 
@@ -90,10 +91,12 @@ fun MapaScreen(
             .fillMaxSize()
             .background(Color(0xFFF2F5FB))
     ) {
-        MapAreaPlaceholder(
-            selectedParking = uiState.selectedParking,
+        OpenStreetMapView(
             bikeRoutes = uiState.bikeRoutes,
+            parkings = uiState.nearbyParkings,
+            userLocation = uiState.userLocation,
             modifier = Modifier.fillMaxSize()
+
         )
 
         when {
@@ -140,7 +143,7 @@ fun MapaScreen(
             },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .height(220.dp)
+                .height(380.dp)
         )
     }
 }
