@@ -1,5 +1,6 @@
 package movil.proyecto_moviles.screens
 
+import android.util.Patterns // Importante para validar el correo
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -54,11 +55,16 @@ import movil.proyecto_moviles.ui.theme.Proyecto_movilesTheme
 fun SesionPantalla(
     onVolverClick: () -> Unit,
     onIniciarSesionClick: () -> Unit,
-    onOlvidoPasswordClick: () -> Unit
+    onOlvidoPasswordClick: () -> Unit,
+    onGoogleSignInClick: () -> Unit // NUEVO: Callback para el botón de Google
 ) {
     var correo by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
+
+    // NUEVO: Lógica de validación
+    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(correo).matches()
+    val isFormValid = isEmailValid && password.isNotEmpty()
 
     Column(
         modifier = Modifier
@@ -163,13 +169,16 @@ fun SesionPantalla(
 
         Button(
             onClick = onIniciarSesionClick,
+            enabled = isFormValid, // NUEVO: El botón reacciona a la validación
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF0A6BEA),
-                contentColor = Color.White
+                contentColor = Color.White,
+                disabledContainerColor = Color(0xFFB0C4DE), // Azul opaco si no es válido
+                disabledContentColor = Color.White
             )
         ) {
             Text(
@@ -181,6 +190,7 @@ fun SesionPantalla(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // Divisor "o continua con"
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
@@ -198,7 +208,7 @@ fun SesionPantalla(
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedButton(
-            onClick = {},
+            onClick = onGoogleSignInClick, // NUEVO: Conectado a la función
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
@@ -288,7 +298,8 @@ fun SesionPantallaPreview() {
         SesionPantalla(
             onVolverClick = {},
             onIniciarSesionClick = {},
-            onOlvidoPasswordClick = {}
+            onOlvidoPasswordClick = {},
+            onGoogleSignInClick = {}
         )
     }
 }
