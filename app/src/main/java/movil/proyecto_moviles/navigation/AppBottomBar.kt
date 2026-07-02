@@ -36,13 +36,15 @@ fun AppBottomBar(navController: NavHostController) {
                     }
                 },
                 icon = {
+                    // Agregamos !! porque estamos seguros de que estos destinos SÍ tienen ícono
                     Icon(
-                        imageVector = destination.icon,
+                        imageVector = destination.icon!!,
                         contentDescription = destination.label
                     )
                 },
                 label = {
-                    Text(text = destination.label)
+                    // Usamos un valor por defecto en caso de que sea nulo (aunque sabemos que no lo será)
+                    Text(text = destination.label ?: "")
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color(0xFF156FE6),

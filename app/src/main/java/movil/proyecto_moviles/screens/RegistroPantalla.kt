@@ -1,5 +1,6 @@
 package movil.proyecto_moviles.screens
 
+import android.util.Patterns
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -25,6 +27,8 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -53,7 +57,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import movil.proyecto_moviles.ui.theme.Proyecto_movilesTheme
-import androidx.compose.foundation.layout.size
 
 @Composable
 fun RegistroScreen(
@@ -66,10 +69,37 @@ fun RegistroScreen(
     var nombre by rememberSaveable { mutableStateOf("") }
     var correo by rememberSaveable { mutableStateOf("") }
     var telefono by rememberSaveable { mutableStateOf("") }
+
     var password by rememberSaveable { mutableStateOf("") }
     var confirmPassword by rememberSaveable { mutableStateOf("") }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    var confirmPasswordVisible by rememberSaveable { mutableStateOf(false) }
+
     var vehiculoSeleccionado by rememberSaveable { mutableStateOf("") }
     var terminosAceptados by rememberSaveable { mutableStateOf(false) }
+
+    // Validaciones de Step 1
+    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(correo).matches()
+    val isStep1Valid = nombre.isNotBlank() && isEmailValid && telefono.length == 9
+
+    // Validaciones de Step 2 (Contraseña)
+    val hasMinLength = password.length >= 8
+    val hasUpperCase = password.any { it.isUpperCase() }
+    val hasNumber = password.any { it.isDigit() }
+    val hasSpecialChar = password.any { !it.isLetterOrDigit() }
+    val isPasswordValid = hasMinLength && hasUpperCase && hasNumber && hasSpecialChar
+    val isStep2Valid = isPasswordValid && password == confirmPassword && password.isNotEmpty()
+
+    // Validaciones de Step 3
+    val isStep3Valid = vehiculoSeleccionado.isNotEmpty() && terminosAceptados
+
+    // Lógica general para habilitar el botón "Continuar"
+    val isButtonEnabled = when (step) {
+        1 -> isStep1Valid
+        2 -> isStep2Valid
+        3 -> isStep3Valid
+        else -> false
+    }
 
     Column(
         modifier = modifier
@@ -148,11 +178,16 @@ fun RegistroScreen(
 
                     CustomTextField(
                         label = "Teléfono",
-                        placeholder = "+51 999 999 999",
+                        placeholder = "Ej: 999111222",
                         icon = Icons.Default.Phone,
                         value = telefono,
-                        onValueChange = { telefono = it },
-                        keyboardType = KeyboardType.Phone
+                        onValueChange = {
+                            // Filtramos para que solo acepte números y máximo 9 dígitos
+                            if (it.length <= 9 && it.all { char -> char.isDigit() }) {
+                                telefono = it
+                            }
+                        },
+                        keyboardType = KeyboardType.Number
                     )
                 }
 
@@ -165,7 +200,7 @@ fun RegistroScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Usa al menos 8 caracteres con letras y números",
+                        text = "Asegura tu cuenta siguiendo los requisitos mínimos",
                         color = Color.Gray,
                         fontSize = 14.sp
                     )
@@ -178,18 +213,22 @@ fun RegistroScreen(
                         icon = Icons.Default.Lock,
                         value = password,
                         onValueChange = { password = it },
-                        isPassword = true
+                        isPassword = true,
+                        passwordVisible = passwordVisible,
+                        onPasswordVisibilityChange = { passwordVisible = !passwordVisible }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     CustomTextField(
                         label = "Confirmar contraseña",
-                        placeholder = "Tu contraseña",
+                        placeholder = "Repite tu contraseña",
                         icon = Icons.Default.Lock,
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
-                        isPassword = true
+                        isPassword = true,
+                        passwordVisible = confirmPasswordVisible,
+                        onPasswordVisibilityChange = { confirmPasswordVisible = !confirmPasswordVisible }
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -206,10 +245,16 @@ fun RegistroScreen(
                                 color = Color.Black,
                                 fontSize = 13.sp
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text(text = "- Al menos 8 caracteres", color = Color.Gray, fontSize = 12.sp)
-                            Text(text = "- Una letra mayúscula", color = Color.Gray, fontSize = 12.sp)
-                            Text(text = "- Un número", color = Color.Gray, fontSize = 12.sp)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            RequirementText(text = "✓ Al menos 8 caracteres", isMet = hasMinLength)
+                            RequirementText(text = "✓ Una letra mayúscula", isMet = hasUpperCase)
+                            RequirementText(text = "✓ Un número", isMet = hasNumber)
+                            RequirementText(text = "✓ Un carácter especial (@, #, !, etc.)", isMet = hasSpecialChar)
+
+                            if (password.isNotEmpty() && confirmPassword.isNotEmpty() && password != confirmPassword) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(text = "Las contraseñas no coinciden", color = Color.Red, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -276,13 +321,16 @@ fun RegistroScreen(
                     onRegistroCompletado()
                 }
             },
+            enabled = isButtonEnabled, // El botón reacciona a nuestras validaciones
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF0A6BEA),
-                contentColor = Color.White
+                contentColor = Color.White,
+                disabledContainerColor = Color(0xFFB0C4DE), // Azul opaco si no es válido
+                disabledContentColor = Color.White
             )
         ) {
             Text(
@@ -291,6 +339,20 @@ fun RegistroScreen(
             )
         }
     }
+}
+
+// --- Componentes Reutilizables ---
+
+@Composable
+fun RequirementText(text: String, isMet: Boolean) {
+    Text(
+        text = text,
+        // Si se cumple, cambia a azul y negrita. Si no, se queda gris y normal.
+        color = if (isMet) Color(0xFF0A6BEA) else Color.Gray,
+        fontWeight = if (isMet) FontWeight.Bold else FontWeight.Normal,
+        fontSize = 12.sp,
+        modifier = Modifier.padding(vertical = 2.dp)
+    )
 }
 
 @Composable
@@ -321,7 +383,9 @@ fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
     keyboardType: KeyboardType = KeyboardType.Text,
-    isPassword: Boolean = false
+    isPassword: Boolean = false,
+    passwordVisible: Boolean = false,
+    onPasswordVisibilityChange: () -> Unit = {}
 ) {
     Column {
         Text(
@@ -339,6 +403,14 @@ fun CustomTextField(
             leadingIcon = {
                 Icon(imageVector = icon, contentDescription = null, tint = Color.Gray)
             },
+            trailingIcon = if (isPassword) {
+                {
+                    val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                    IconButton(onClick = onPasswordVisibilityChange) {
+                        Icon(imageVector = image, contentDescription = "Mostrar contraseña", tint = Color.Gray)
+                    }
+                }
+            } else null,
             shape = RoundedCornerShape(12.dp),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color(0xFFF0F4F8),
@@ -349,7 +421,7 @@ fun CustomTextField(
             ),
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None
+            visualTransformation = if (isPassword && !passwordVisible) PasswordVisualTransformation() else VisualTransformation.None
         )
     }
 }
